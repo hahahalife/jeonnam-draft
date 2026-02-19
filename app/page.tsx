@@ -1,3 +1,5 @@
+console.log("NEW VERSION LOADED");
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 export default function Home() {
   const [seats, setSeats] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
-  const [code, setCode] = useState("");
+  const [nameInput, setNameInput] = useState("");
   const [pin, setPin] = useState("");
   const [me, setMe] = useState<any>(null);
 
@@ -24,18 +26,20 @@ export default function Home() {
     setSeats(seatData || []);
     setParticipants(partData || []);
 
-    if (code) {
-      const updatedMe = partData?.find((p) => p.code === code);
+    if (nameInput) {
+      const updatedMe = partData?.find((p) => p.name === nameInput);
       if (updatedMe) setMe(updatedMe);
     }
   }
 
   async function login() {
-    const found = participants.find((p) => p.code === code);
+    const found = participants.find((p) => p.name === nameInput);
+
     if (!found) {
-      alert("코드가 존재하지 않습니다.");
+      alert("이름이 존재하지 않습니다.");
       return;
     }
+
     setMe(found);
   }
 
@@ -43,7 +47,7 @@ export default function Home() {
     if (!me) return alert("먼저 로그인하세요.");
 
     const { error } = await supabase.rpc("rpc_set_desired", {
-      p_code: me.code,
+      p_name: me.name,
       p_pin: pin,
       p_seat_id: seatId,
     });
@@ -60,7 +64,7 @@ export default function Home() {
     if (!me) return;
 
     const { error } = await supabase.rpc("rpc_confirm", {
-      p_code: me.code,
+      p_name: me.name,
       p_pin: pin,
     });
 
@@ -109,9 +113,9 @@ export default function Home() {
         <h2 className="font-semibold">로그인</h2>
         <input
           className="border p-2 w-full"
-          placeholder="코드 입력"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
+          placeholder="이름 입력"
+          value={nameInput}
+          onChange={(e) => setNameInput(e.target.value)}
         />
         <input
           className="border p-2 w-full"
@@ -132,6 +136,7 @@ export default function Home() {
       {me && (
         <div className="border p-4 rounded space-y-3">
           <h2 className="font-semibold">내 정보</h2>
+          <p>이름: {me.name}</p>
           <p>순위: {me.rank}</p>
           <p>상태: {me.status}</p>
           <p>
@@ -141,44 +146,43 @@ export default function Home() {
               : "미배정"}
           </p>
 
-         <h3 className="font-semibold mt-4">자리 선택</h3>
-{seats.map((seat) => {
-  const confirmedOwner = participants.find(
-    (p) =>
-      p.assigned_seat_id === seat.id &&
-      p.status === "CONFIRMED"
-  );
+          <h3 className="font-semibold mt-4">자리 선택</h3>
+          {seats.map((seat) => {
+            const confirmedOwner = participants.find(
+              (p) =>
+                p.assigned_seat_id === seat.id &&
+                p.status === "CONFIRMED"
+            );
 
-  const isMine =
-    me && me.assigned_seat_id === seat.id;
+            const isMine =
+              me && me.assigned_seat_id === seat.id;
 
-  const isConfirmedByOther =
-    confirmedOwner && (!me || confirmedOwner.code !== me.code);
+            const isConfirmedByOther =
+              confirmedOwner &&
+              confirmedOwner.name !== me.name;
 
-  let buttonStyle = "bg-white text-black";
-  let disabled = false;
+            let style = "bg-white text-black";
+            let disabled = false;
 
-  if (isMine) {
-    buttonStyle = "bg-green-600 text-white";
-  } else if (isConfirmedByOther) {
-    buttonStyle = "bg-red-600 text-white";
-    disabled = true;
-  }
+            if (isMine) {
+              style = "bg-green-600 text-white";
+            } else if (isConfirmedByOther) {
+              style = "bg-red-600 text-white";
+              disabled = true;
+            }
 
-  return (
-    <button
-      key={seat.id}
-      className={`block w-full p-2 my-1 border rounded ${buttonStyle}`}
-      onClick={() => selectSeat(seat.id)}
-      disabled={disabled}
-    >
-      {seat.name}
-      {isConfirmedByOther && " 🔒"}
-    </button>
-  );
-})}
-
-
+            return (
+              <button
+                key={seat.id}
+                className={`block w-full p-2 my-1 border rounded ${style}`}
+                onClick={() => selectSeat(seat.id)}
+                disabled={disabled}
+              >
+                {seat.name}
+                {isConfirmedByOther && " 🔒"}
+              </button>
+            );
+          })}
 
           <button
             className={`px-4 py-2 rounded mt-3 ${
@@ -198,8 +202,8 @@ export default function Home() {
       <div className="border p-4 rounded">
         <h2 className="font-semibold mb-2">순위 현황</h2>
         {participants.map((p) => (
-          <div key={p.code} className="border-b py-1">
-            {p.rank}번 - {p.code} - {p.status} -{" "}
+          <div key={p.name} className="border-b py-1">
+            {p.rank}번 - {p.name} - {p.status} -{" "}
             {p.assigned_seat_id
               ? seatNameById.get(p.assigned_seat_id)
               : "미배정"}
