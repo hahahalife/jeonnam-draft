@@ -141,25 +141,43 @@ export default function Home() {
               : "미배정"}
           </p>
 
-          <h3 className="font-semibold mt-4">자리 선택</h3>
-          {seats.map((seat) => {
-  const isSelected =
+         <h3 className="font-semibold mt-4">자리 선택</h3>
+{seats.map((seat) => {
+  const confirmedOwner = participants.find(
+    (p) =>
+      p.assigned_seat_id === seat.id &&
+      p.status === "CONFIRMED"
+  );
+
+  const isMine =
     me && me.assigned_seat_id === seat.id;
+
+  const isConfirmedByOther =
+    confirmedOwner && (!me || confirmedOwner.code !== me.code);
+
+  let buttonStyle = "bg-white text-black";
+  let disabled = false;
+
+  if (isMine) {
+    buttonStyle = "bg-green-600 text-white";
+  } else if (isConfirmedByOther) {
+    buttonStyle = "bg-red-600 text-white";
+    disabled = true;
+  }
 
   return (
     <button
       key={seat.id}
-      className={`block w-full p-2 my-1 border rounded ${
-        isSelected
-          ? "bg-green-600 text-white"
-          : "bg-white text-black"
-      }`}
+      className={`block w-full p-2 my-1 border rounded ${buttonStyle}`}
       onClick={() => selectSeat(seat.id)}
+      disabled={disabled}
     >
       {seat.name}
+      {isConfirmedByOther && " 🔒"}
     </button>
   );
 })}
+
 
 
           <button
