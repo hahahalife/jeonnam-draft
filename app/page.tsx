@@ -15,15 +15,21 @@ export default function Home() {
   }, []);
 
   async function fetchData() {
-    const { data: seatData } = await supabase.from("seats").select("*");
-    const { data: partData } = await supabase
-      .from("participants")
-      .select("*")
-      .order("rank", { ascending: true });
+  const { data: seatData } = await supabase.from("seats").select("*");
+  const { data: partData } = await supabase
+    .from("participants")
+    .select("*")
+    .order("rank", { ascending: true });
 
-    setSeats(seatData || []);
-    setParticipants(partData || []);
+  setSeats(seatData || []);
+  setParticipants(partData || []);
+
+  if (code) {
+    const updatedMe = partData?.find((p) => p.code === code);
+    if (updatedMe) setMe(updatedMe);
   }
+}
+
 
   async function login() {
     const found = participants.find((p) => p.code === code);
