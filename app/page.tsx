@@ -24,6 +24,14 @@ export default function Home() {
   setSeats(seatData || []);
   setParticipants(partData || []);
 
+  // 👇 여기 추가
+  if (code) {
+    const updatedMe = partData?.find((p) => p.code === code);
+    if (updatedMe) setMe(updatedMe);
+  }
+}
+
+
   if (code) {
     const updatedMe = partData?.find((p) => p.code === code);
     if (updatedMe) setMe(updatedMe);
